@@ -1,0 +1,79 @@
+----------- Paste in lambda editor:---------------
+---------------------------------------------------
+
+
+import json
+import logging
+
+import boto3
+
+# Configure logging
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+# Create EC2 client
+ec2 = boto3.client("ec2")
+
+
+def stop_all_running_instances() -> dict:
+    """
+    Stops all running EC2 instances in the current AWS Region.
+    """
+
+    try:
+        response = ec2.describe_instances(
+            Filters=[
+                {
+                    "Name": "instance-state-name",
+                    "Values": ["running"]
+                }
+            ]
+        )
+
+        instance_ids: list[str] = [
+            instance["InstanceId"]
+            for reservation in response.get("Reservations", [])
+            for instance in reservation.get("Instances", [])
+        ]
+
+        if not instance_ids:
+            logger.info("No running EC2 instances found.")
+
+            return {
+                "status": "success",
+                "message": "No running instances found."
+            }
+
+        logger.info(f"Running instances: {instance_ids}")
+
+        stop_response = ec2.stop_instances(
+            InstanceIds=instance_ids
+        )
+
+        logger.info("Stop request submitted successfully.")
+
+        return {
+            "status": "success",
+            "stopped_instances": instance_ids,
+            "aws_response": stop_response
+        }
+
+    except Exception as error:
+        logger.exception("Error while stopping EC2 instances.")
+
+        return {
+            "status": "error",
+            "message": str(error)
+        }
+
+
+def lambda_handler(event: dict, context) -> dict:
+    """
+    AWS Lambda entry point.
+    """
+    result = stop_all_running_instances()
+
+    return {
+        "statusCode": 200,
+        "body": json.dumps(result)
+    }
