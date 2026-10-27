@@ -1,0 +1,53 @@
+
+#!/bin/bash
+dnf update -y
+
+# Install Apache Web Server
+dnf install -y httpd
+
+# Start Apache
+systemctl start httpd
+systemctl enable httpd
+
+# Create HTML Web Page
+cat > /var/www/html/index.html <<'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AWS EC2 Web Application</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #eef2f7;
+            text-align: center;
+            padding: 80px;
+        }
+        h1 {
+            color: #ff9900;
+        }
+        .box {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>Welcome to AWS EC2</h1>
+        <h2>My First Cloud Web Application</h2>
+        <p>Hosted on Amazon Linux 2023</p>
+        <p>Web Server: Apache HTTP Server</p>
+        <p>Deployment Successful!</p>
+    </div>
+</body>
+</html>
+EOF
+
+# Set permissions
+chmod 644 /var/www/html/index.html
+
+# Restart Apache
+systemctl restart httpd
